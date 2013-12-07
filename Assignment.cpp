@@ -1,12 +1,19 @@
 #include "Assignment.h"
 #include "PhysicsController.h"
 #include "Sphere.h"
+<<<<<<< HEAD
+=======
+#include "PhysicsCamera.h"
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 #include "Box.h"
 #include "Cylinder.h"
 #include "Steerable3DController.h"
 #include "Ground.h"
 #include "Content.h"
+<<<<<<< HEAD
 #include "PhysicsCamera.h"
+=======
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 #include <btBulletDynamicsCommon.h>
 #include <gtc/quaternion.hpp>
 #include <gtx/quaternion.hpp>
@@ -19,8 +26,11 @@ using namespace BGE;
 
 Assignment::Assignment(void)
 {
+<<<<<<< HEAD
 	e = 10000.0f;
 	f = 1.0f;
+=======
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 	physicsFactory = NULL;
 	dynamicsWorld = NULL;
 	broadphase = NULL;
@@ -28,7 +38,10 @@ Assignment::Assignment(void)
 	solver = NULL;
 	fullscreen = false;
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 }
 
 Assignment::~Assignment(void)
@@ -37,7 +50,10 @@ Assignment::~Assignment(void)
 
 bool Assignment::Initialise() 
 {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 	collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
  
@@ -65,6 +81,7 @@ bool Assignment::Initialise()
 	return true;
 }
 
+<<<<<<< HEAD
 shared_ptr<PhysicsController> wheel1;
 shared_ptr<PhysicsController> wheel2;
 shared_ptr<PhysicsController> wheel3;
@@ -141,11 +158,19 @@ void Assignment::Update(float timeDelta)
 		
 	}
 
+=======
+void BGE::Assignment::Update(float timeDelta)
+{
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 	dynamicsWorld->stepSimulation(timeDelta,100);
 	Game::Update(timeDelta);
 }
 
+<<<<<<< HEAD
 void Assignment::Cleanup()
+=======
+void BGE::Assignment::Cleanup()
+>>>>>>> 5f3c7c81281629a46c97c2f81b371d2208ba04fe
 {
 	Game::Cleanup();
 }
