@@ -22,5 +22,7 @@ namespace BGE
 		void getWorldTransform(btTransform &worldTrans) const;
 		void setWorldTransform(const btTransform &worldTrans);
 		Create * physicsFactory;
+		float elapsed;
+		float fireRate;
 	};
 }

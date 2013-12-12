@@ -207,3 +207,44 @@ shared_ptr<PhysicsController> Create::CreateGroundPhysics()
 	Game::Instance()->SetGround(ground);
 	return groundComponent;
 }
+
+
+
+void Create::CreateDoll()
+{
+
+	std::shared_ptr<PhysicsController> body;
+	std::shared_ptr<PhysicsController> arm1;
+	std::shared_ptr<PhysicsController> forearm1;
+	std::shared_ptr<PhysicsController> arm2;
+	std::shared_ptr<PhysicsController> forearm2;
+	std::shared_ptr<PhysicsController> head;
+	std::shared_ptr<PhysicsController> leg1;
+	std::shared_ptr<PhysicsController> leg2;
+ 
+	head = CreateSphere(2,30,glm::vec3(20, 26, 0), glm::quat());
+	body = CreateBox(2,6,3,20, glm::vec3(20, 20, 0), glm::quat()); 
+	arm1 = CreateBox(1,1,3,10, glm::vec3(20, 22, 5), glm::quat()); 
+	forearm1 = CreateBox(1,1,4,10, glm::vec3(20, 22, 8), glm::quat()); 
+	arm2 = CreateBox(1,1,3,10, glm::vec3(20, 22, -5), glm::quat()); 
+	forearm2 = CreateBox(1,1,4,10, glm::vec3(20, 22, -8), glm::quat());
+	leg1 = CreateBox(1,4,1,15, glm::vec3(20, 13.5, -0.7), glm::quat()); 
+	leg2 = CreateBox(1,4,1,15, glm::vec3(20, 13.5, 0.7), glm::quat());
+
+	
+	btHingeConstraint * neck = new btHingeConstraint(* head->rigidBody, * body->rigidBody, btVector3(0,-1.5f,0),btVector3(0,4.5f,0), btVector3(0,1,0), btVector3(0,1,0), true);
+
+	btPoint2PointConstraint * shoulder = new btPoint2PointConstraint(*body->rigidBody, *arm1->rigidBody, btVector3(0,2.0f,2.0f),btVector3(0,-2.0f,-2.0f));
+	btPoint2PointConstraint * elbow = new btPoint2PointConstraint(*arm1->rigidBody, *forearm1->rigidBody, btVector3(0,0,2.0f),btVector3(0,0,-2.0f));
+	btPoint2PointConstraint * shoulder2 = new btPoint2PointConstraint(*body->rigidBody, *arm2->rigidBody, btVector3(0,2.0f,-2.0f),btVector3(0,-1.0f,-2.0f));
+	btPoint2PointConstraint * elbow2 = new btPoint2PointConstraint(*arm2->rigidBody, *forearm2->rigidBody, btVector3(0,0,2.0f),btVector3(0,0,-2.0f));
+	btPoint2PointConstraint * hip1 = new btPoint2PointConstraint(*body->rigidBody, *leg1->rigidBody, btVector3(0,-3.0f,-1.0f),btVector3(0,3.0f,0));
+	btPoint2PointConstraint * hip2 = new btPoint2PointConstraint(*body->rigidBody, *leg2->rigidBody, btVector3(0,-3.0f,1.0f),btVector3(0,3.0f,0));
+	dynamicsWorld->addConstraint(neck);
+	dynamicsWorld->addConstraint(hip1);
+	dynamicsWorld->addConstraint(hip2);
+	dynamicsWorld->addConstraint(shoulder);
+	dynamicsWorld->addConstraint(elbow);
+	dynamicsWorld->addConstraint(shoulder2);
+	dynamicsWorld->addConstraint(elbow2);
+}

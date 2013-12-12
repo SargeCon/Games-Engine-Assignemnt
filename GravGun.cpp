@@ -8,7 +8,8 @@ using namespace BGE;
 
 GravGun::GravGun(Create * physicsFactory):PhysicsController()
 {
-
+	elapsed = 10000.0f;
+	fireRate = 5.0f;
 	pickedUp = NULL;
 	tag = "Physics Camera";
 	this->physicsFactory = physicsFactory;
@@ -36,8 +37,20 @@ void GravGun::Update(float timeDelta)
 	Game * game = Game::Instance();
 
 	float moveSpeed = speed;
-
+	float timeToPass = 1.0f / fireRate;
 	string what = "Nothing";
+
+	if ((keyState[SDL_SCANCODE_SPACE]) && (elapsed > timeToPass))
+	{
+		glm::vec3 pos = parent->position + (parent->look * 5.0f);
+		glm::quat q(RandomFloat(), RandomFloat(), RandomFloat(), RandomFloat());
+		glm::normalize(q);
+		shared_ptr<PhysicsController> physicsComponent = physicsFactory->CreateBox(1,1,1,10,pos, q);
+		
+		float force = 5000.0f;
+		physicsComponent->rigidBody->applyCentralForce(GLToBtVector(parent->look) * force);
+		elapsed = 0.0f;
+	}
 	// Handle the gravity gun
 	if (SDL_GetMouseState(NULL, NULL) && SDL_BUTTON(3))
 	{

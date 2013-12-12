@@ -6,6 +6,7 @@
 #include <gtx/norm.hpp>
 #include "VectorDrawer.h"
 #include "Utils.h"
+#include "Content.h"
 
 using namespace BGE;
 
@@ -33,6 +34,12 @@ Assignment::~Assignment(void)
 bool Assignment::Initialise() 
 {
 
+	ship1 = make_shared<GameComponent>();
+	ship1->Attach(Content::LoadModel("cobramk3", glm::rotate(glm::mat4(1), 90.0f, glm::vec3(0,1,0))));
+	ship1->position = glm::vec3(-150, 100, -250);
+	ship1->scale = glm::vec3(10, 10, 10);
+	Attach(ship1);
+
 	collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
  
@@ -45,38 +52,16 @@ bool Assignment::Initialise()
     dynamicsWorld->setGravity(btVector3(0,0,0));
 
 	physicsFactory = make_shared<Create>(dynamicsWorld);
+	
 	//physicsFactory2 = make_shared<Create>(dynamicsWorld);
-	//physicsFactory2->CreateCameraPhysics();
+	physicsFactory->CreateCameraPhysics();
 	physicsFactory->CreateGroundPhysics();
-
-	//shared_ptr<PhysicsController> box1 = physicsFactory->CreateBox(1,1,4, glm::vec3(5, 5, 0), glm::quat()); 
-	head = physicsFactory->CreateSphere(2,30,glm::vec3(20, 16, 0), glm::quat());
-	body = physicsFactory->CreateBox(2,6,3,20, glm::vec3(20, 10, 0), glm::quat()); 
-	arm1 = physicsFactory->CreateBox(1,1,3,10, glm::vec3(20, 12, 5), glm::quat()); 
-	//forearm1 = physicsFactory->CreateBox(1,1,4,10, glm::vec3(20, 12, 8), glm::quat()); 
-	//arm2 = physicsFactory->CreateBox(1,1,3,10, glm::vec3(20, 12, -5), glm::quat()); 
-	//forearm2 = physicsFactory->CreateBox(1,1,4,10, glm::vec3(20, 12, -8), glm::quat());
-	/*leg1 = physicsFactory->CreateBox(1,1,3,15, glm::vec3(20, 10, -5), glm::quat()); 
-	leg2 = physicsFactory->CreateBox(1,1,4,15, glm::vec3(20, 10, -10), glm::quat());*/
-
-	
-	btHingeConstraint * neck = new btHingeConstraint(* head->rigidBody, * body->rigidBody, btVector3(0,-1.5f,0),btVector3(0,4.5f,0), btVector3(0,1,0), btVector3(0,1,0), true);
-
-	btPoint2PointConstraint * shoulder = new btPoint2PointConstraint(*body->rigidBody, *arm1->rigidBody, btVector3(0,1.0f,2.0f),btVector3(0,-1.0f,-2.0f));
-	//btPoint2PointConstraint * elbow = new btPoint2PointConstraint(*arm1->rigidBody, *forearm1->rigidBody, btVector3(0,0,2.0f),btVector3(0,0,-2.0f));
-	//btPoint2PointConstraint * shoulder2 = new btPoint2PointConstraint(*body->rigidBody, *arm2->rigidBody, btVector3(0,1.5f,-2.0f),btVector3(0,1.5f,-2.0f));
-	//btPoint2PointConstraint * elbow2 = new btPoint2PointConstraint(*arm2->rigidBody, *forearm2->rigidBody, btVector3(0,0,2.0f),btVector3(0,0,-2.0f));
-	dynamicsWorld->addConstraint(neck);
-	dynamicsWorld->addConstraint(shoulder);
-	//dynamicsWorld->addConstraint(elbow);
-	//dynamicsWorld->addConstraint(shoulder2);
-	//dynamicsWorld->addConstraint(elbow2);
-	
-
 
 	if (!Game::Initialise()) {
 		return false;
 	}
+
+
 
 	camera->GetController()->position = glm::vec3(0,10, 20);
 	
@@ -167,6 +152,15 @@ void Assignment::Update(float timeDelta)
 		frontright->rigidBody->applyTorque(GLToBtVector(glm::vec3(-2000.0f,0.0f,0.0f)));
 		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(-4000.0f,0.0f,0.0f)));
 		
+	}
+	if (keyState[SDL_SCANCODE_R] && (e > timeToPass))
+	{
+		physicsFactory->CreateDoll();
+		e = 0.0f;
+	}
+	else
+	{
+		e += timeDelta;
 	}
 
 	dynamicsWorld->stepSimulation(timeDelta,100);
