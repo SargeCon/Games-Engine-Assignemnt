@@ -6,7 +6,9 @@
 #include <gtx/norm.hpp>
 #include "VectorDrawer.h"
 #include "Utils.h"
+#include "FountainEffect.h"
 #include "Content.h"
+
 
 using namespace BGE;
 
@@ -23,8 +25,6 @@ Assignment::Assignment(void)
 	solver = NULL;
 	fullscreen = false;
 
-
-
 }
 
 Assignment::~Assignment(void)
@@ -34,13 +34,10 @@ Assignment::~Assignment(void)
 bool Assignment::Initialise() 
 {
 
-	ship1 = make_shared<GameComponent>();
-	ship1->Attach(Content::LoadModel("cobramk3", glm::rotate(glm::mat4(1), 90.0f, glm::vec3(0,1,0))));
-	ship1->position = glm::vec3(-150, 100, -250);
-	ship1->scale = glm::vec3(10, 10, 10);
-	Attach(ship1);
-
-
+	fire = make_shared<FountainEffect>(500);
+	fire->position = glm::vec3(20, 10, 0);
+	fire->diffuse = glm::vec3(0,1,1);
+	Attach(fire);
 
 	collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -55,9 +52,17 @@ bool Assignment::Initialise()
 
 	make = make_shared<Create>(dynamicsWorld);
 	
-	make->CreateWall(glm::vec3(10,10,10), 3,5, 25);
-	make->CreateWall(glm::vec3(40,10,10), 3,5, 100);
-	make->CreateWall(glm::vec3(70,10,10), 3,5, 500);
+	//making walls and buildings
+	make->CreateWall(glm::vec3(10,10,10), 1,5, 1);
+	make->CreateWall(glm::vec3(40,10,10), 1,5, 10);
+	make->CreateWall(glm::vec3(70,10,10), 1,5, 25);
+	make->CreateWall(glm::vec3(70,10,200), 10,4, 25);
+	make->CreateBuilding(glm::vec3(100,10,100), 3,3,5,10);
+	make->CreateWall(glm::vec3(-20,3.8,63), 5,5,2);
+	make->CreateWall(glm::vec3(-60,3.8,73), 5,5,10);
+	make->CreateWall(glm::vec3(-90,3.8,83), 5,5,100);
+
+	//make->CreateBuilding(glm::vec3(100,10,10), 3,3,5,25);
 
 	//physicsFactory2 = make_shared<Create>(dynamicsWorld);
 	make->CreateCameraPhysics();
@@ -67,7 +72,6 @@ bool Assignment::Initialise()
 		return false;
 	}
 
-	
 	camera->GetController()->position = glm::vec3(0,10, 20);
 	
 	return true;
@@ -81,9 +85,8 @@ bool checksnow = false;
 
 void Assignment::Update(float timeDelta)
 {
-	const Uint8 * keyState = Game::Instance()->GetKeyState();
-	Game * game = Game::Instance();
 
+	Game * game = Game::Instance();
 	float timeToPass = 1.0f / f;
 
 	//spawn a car when space is pressed
@@ -97,26 +100,14 @@ void Assignment::Update(float timeDelta)
 		e += timeDelta;
 	}
 
-
+	//Press up to give car torgue
 	if (keyState[SDL_SCANCODE_UP])
 	{
-		make->MoveCarForward(1000.0f);
+		make->MoveCarForward(3000.0f);
 		PrintText("Up");
 		
 	}
-	
-	if (keyState[SDL_SCANCODE_R] && (e > timeToPass))
-	{
-
-		;
-		make->CreateDoll(glm::vec3(20.0f, 20.0f, 0.0f));
-		e = 0.0f;
-	}
-	else
-	{
-		e += timeDelta;
-	}
-	
+	//make it snow
 	if (keyState[SDL_SCANCODE_F])
 	{
 
@@ -132,6 +123,27 @@ void Assignment::Update(float timeDelta)
 		}
 	}
 
+	PrintText("Press R to spawn Car");
+	PrintText("Press Right Mouse to force push");
+	PrintText("Press Space to grab an object");
+	PrintText("Press E to spawn doll");
+	PrintText("Press Q to fire ball");
+
+	/*stringstream car;
+	stringstream push;
+	stringstream grab;
+	stringstream doll;
+	stringstream ball;
+	car << "Press T to spawn Car";
+	push << "Press Right Mouse to force push";
+	grab << "Press Space to grab an object";
+	doll << "Press R to spawn doll";
+	ball << "Press Q to fire ball";
+	game->PrintText(car.str());
+	game->PrintText(push.str());
+	game->PrintText(grab.str());
+	game->PrintText(doll.str());
+	game->PrintText(ball.str());*/
 
 	dynamicsWorld->stepSimulation(timeDelta,100);
 	Game::Update(timeDelta);

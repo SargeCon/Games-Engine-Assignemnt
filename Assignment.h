@@ -5,6 +5,7 @@
 #include "GravGun.h"
 #include "SnowEffect.h"
 #include "GameComponent.h"
+#include "FountainEffect.h"
 #include <btBulletDynamicsCommon.h>
 
 namespace BGE
@@ -22,6 +23,11 @@ namespace BGE
 		// The actual physics solver
 		btSequentialImpulseConstraintSolver * solver;
 
+		float e;
+		float f;
+
+		shared_ptr<SnowEffect> snow;
+		shared_ptr<FountainEffect> fire;
 	public:
 		Assignment(void);
 		~Assignment(void);
@@ -33,12 +39,6 @@ namespace BGE
 		// The world.
 		btDiscreteDynamicsWorld * dynamicsWorld;
 		std::shared_ptr<Create> make;
-		shared_ptr<GameComponent> ship1;
-		float e;
-		float f;
 
-
-		shared_ptr<SnowEffect> snow;
-		
 	};
 }
