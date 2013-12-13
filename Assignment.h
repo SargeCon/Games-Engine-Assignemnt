@@ -3,6 +3,7 @@
 #include "PhysicsController.h"
 #include "Create.h"
 #include "GravGun.h"
+#include "SnowEffect.h"
 #include "GameComponent.h"
 #include <btBulletDynamicsCommon.h>
 
@@ -31,18 +32,13 @@ namespace BGE
 		
 		// The world.
 		btDiscreteDynamicsWorld * dynamicsWorld;
-		std::shared_ptr<Create> physicsFactory;
+		std::shared_ptr<Create> make;
 		shared_ptr<GameComponent> ship1;
 		float e;
 		float f;
-		std::shared_ptr<PhysicsController> frontright;
-		std::shared_ptr<PhysicsController> backright;
-		std::shared_ptr<PhysicsController> backleft;
-		std::shared_ptr<PhysicsController> frontleft;
-		btHingeConstraint * hinge1;
-		btHingeConstraint * hinge2;
-		btHingeConstraint * hinge3;
-		btHingeConstraint * hinge4;
+
+
+		shared_ptr<SnowEffect> snow;
 		
 	};
 }

@@ -16,7 +16,7 @@ Assignment::Assignment(void)
 {
 	e = 10000.0f;
 	f = 1.0f;
-	physicsFactory = NULL;
+	make = NULL;
 	dynamicsWorld = NULL;
 	broadphase = NULL;
 	dispatcher = NULL;
@@ -40,6 +40,8 @@ bool Assignment::Initialise()
 	ship1->scale = glm::vec3(10, 10, 10);
 	Attach(ship1);
 
+
+
 	collisionConfiguration = new btDefaultCollisionConfiguration();
     dispatcher = new btCollisionDispatcher(collisionConfiguration);
  
@@ -49,20 +51,23 @@ bool Assignment::Initialise()
 	broadphase = new btAxisSweep3(worldMin,worldMax);
 	solver = new btSequentialImpulseConstraintSolver();
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher,broadphase,solver,collisionConfiguration);
-    dynamicsWorld->setGravity(btVector3(0,0,0));
+    dynamicsWorld->setGravity(btVector3(0,-10,0));
 
-	physicsFactory = make_shared<Create>(dynamicsWorld);
+	make = make_shared<Create>(dynamicsWorld);
 	
+	make->CreateWall(glm::vec3(10,10,10), 3,5, 25);
+	make->CreateWall(glm::vec3(40,10,10), 3,5, 100);
+	make->CreateWall(glm::vec3(70,10,10), 3,5, 500);
+
 	//physicsFactory2 = make_shared<Create>(dynamicsWorld);
-	physicsFactory->CreateCameraPhysics();
-	physicsFactory->CreateGroundPhysics();
+	make->CreateCameraPhysics();
+	make->CreateGroundPhysics();
 
 	if (!Game::Initialise()) {
 		return false;
 	}
 
-
-
+	
 	camera->GetController()->position = glm::vec3(0,10, 20);
 	
 	return true;
@@ -71,6 +76,8 @@ bool Assignment::Initialise()
 
 
 btScalar maxMotorImpulse = 1400.f;
+bool checksnow = false;
+
 
 void Assignment::Update(float timeDelta)
 {
@@ -82,86 +89,49 @@ void Assignment::Update(float timeDelta)
 	//spawn a car when space is pressed
 	if (keyState[SDL_SCANCODE_T] && (e > timeToPass))
 	{
-		glm::vec3 position(100,10,0);
-		float width = 12;
-		float height = 2;
-		float length = 5;
-		float chassisMass = 100;
-		float wheelWidth = 1;
-		float wheelRadius = 1.5f;
-		float wheelMass = 25;
-		float wheelOffset = 1.0f;
-
-		shared_ptr<PhysicsController> chassis = physicsFactory->CreateBox(width, height, length, chassisMass, position, glm::quat());
-
-		frontright= physicsFactory->CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat());
-
-		hinge1 = new btHingeConstraint(* chassis->rigidBody, * frontright->rigidBody, btVector3(6.0f,0.0f,5.0f), btVector3(0,0,0), btVector3(0,0,1), btVector3(0,1,0), true);
-		dynamicsWorld->addConstraint(hinge1);
-
-		backright= physicsFactory->CreateCylinder(wheelRadius, wheelWidth,wheelMass, glm::vec3(106,10,5), glm::quat());
-		hinge2 = new btHingeConstraint(* chassis->rigidBody, * backright->rigidBody, btVector3(6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
-		dynamicsWorld->addConstraint(hinge2);
-
-		backleft= physicsFactory->CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
-		hinge3 = new btHingeConstraint(* chassis->rigidBody, * backleft->rigidBody, btVector3(-6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
-		dynamicsWorld->addConstraint(hinge3);
-
-		frontleft= physicsFactory->CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
-		hinge4 = new btHingeConstraint(* chassis->rigidBody, * frontleft->rigidBody, btVector3(-6.0f,0.0f,5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
-		dynamicsWorld->addConstraint(hinge4);
-		PrintText("Test");
+		make->CreateCar(glm::vec3(100,0,50), 100, 25);
 		e = 0.0f;
-		
 	}
 	else
 	{
 		e += timeDelta;
 	}
+
 
 	if (keyState[SDL_SCANCODE_UP])
 	{
-		
-		//wheel1->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,200.0f)));
-		//wheel2->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,1000.0f)));
-		backright->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,1000.0f)));
-		backleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,1000.0f)));
-
+		make->MoveCarForward(1000.0f);
 		PrintText("Up");
 		
 	}
-	if(keyState[SDL_SCANCODE_DOWN])
-	{
-		PrintText("Down");
-		frontright->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,-50.0f)));
-		backright->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,-50.0f)));
-		backleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,-50.0f)));
-		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,-50.0f)));
-		
-	}
-	if(keyState[SDL_SCANCODE_LEFT])
-	{
-		PrintText("Left");
-		frontright->rigidBody->applyTorque(GLToBtVector(glm::vec3(2000.0f,0.0f,0.0f)));
-		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(2000.0f,0.0f,0.0f)));
-		
-	}
-	if(keyState[SDL_SCANCODE_RIGHT])
-	{
-		PrintText("Right");
-		frontright->rigidBody->applyTorque(GLToBtVector(glm::vec3(-2000.0f,0.0f,0.0f)));
-		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(-4000.0f,0.0f,0.0f)));
-		
-	}
+	
 	if (keyState[SDL_SCANCODE_R] && (e > timeToPass))
 	{
-		physicsFactory->CreateDoll();
+
+		;
+		make->CreateDoll(glm::vec3(20.0f, 20.0f, 0.0f));
 		e = 0.0f;
 	}
 	else
 	{
 		e += timeDelta;
 	}
+	
+	if (keyState[SDL_SCANCODE_F])
+	{
+
+		snow = make_shared<SnowEffect>();
+		snow->position = glm::vec3(-30, 0, 0);
+		snow->diffuse = glm::vec3(1,1, 0);
+		Attach(snow);
+		
+		if(checksnow == false)
+		{
+			snow->Initialise();
+			checksnow = true;
+		}
+	}
+
 
 	dynamicsWorld->stepSimulation(timeDelta,100);
 	Game::Update(timeDelta);
