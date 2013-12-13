@@ -11,6 +11,15 @@ namespace BGE
 	{
 	private:
 		
+		std::shared_ptr<PhysicsController> frontright;
+		std::shared_ptr<PhysicsController> backright;
+		std::shared_ptr<PhysicsController> backleft;
+		std::shared_ptr<PhysicsController> frontleft;
+		btHingeConstraint * hinge1;
+		btHingeConstraint * hinge2;
+		btHingeConstraint * hinge3;
+		btHingeConstraint * hinge4;
+
 	public:
 		Create(btDiscreteDynamicsWorld * dynamicsWorld);
 		~Create(void);
@@ -22,17 +31,15 @@ namespace BGE
 		shared_ptr<PhysicsController> CreateGroundPhysics();
 		shared_ptr<PhysicsController> CreateFromModel(string name, glm::vec3 pos, glm::quat quat, glm::vec3 scale = glm::vec3(1));
 		
-		std::shared_ptr<PhysicsController> frontright;
-		std::shared_ptr<PhysicsController> backright;
-		std::shared_ptr<PhysicsController> backleft;
-		std::shared_ptr<PhysicsController> frontleft;
-
-		void MoveCarForward(float speed);
-
 		void CreateDoll(glm::vec3 pos);
 		void CreateCar(glm::vec3 p, float cm, float wm);
 		void CreateWall(glm::vec3 startAt, float width, float height, float mass, float blockWidth = 5, float blockHeight = 5, float blockDepth = 5);
-		shared_ptr<PhysicsController> CreateRandomObject(glm::vec3 point, glm::quat q);
+		void CreateBuilding(glm::vec3 startAt,float depth, float width, float height, float mass, float blockWidth = 5, float blockHeight = 5, float blockDepth = 5);
+		void CreateBalloon(glm::vec3 p, int amount);
+
+		void MoveCarForward(float speed);
+		void turnLeft(float speed);
+
 		btDiscreteDynamicsWorld * dynamicsWorld;
 	};
 }

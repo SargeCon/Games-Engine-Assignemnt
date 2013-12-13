@@ -1,4 +1,5 @@
 #include "Create.h"
+#include <stdlib.h>   
 #include "Game.h"
 #include "Sphere.h"
 #include "Box.h"
@@ -9,6 +10,7 @@
 #include "Model.h"
 #include "dirent.h"
 #include "Utils.h"
+
 using namespace BGE;
 
 Create::Create(btDiscreteDynamicsWorld * dynamicsWorld)
@@ -37,46 +39,27 @@ void Create::CreateWall(glm::vec3 startAt, float width, float height, float mass
 	}
 }
 
-shared_ptr<PhysicsController> Create::CreateFromModel(string name, glm::vec3 pos, glm::quat quat, glm::vec3 scale)
+void Create::CreateBuilding(glm::vec3 startAt,float depth, float width, float height, float mass, float blockWidth, float blockHeight, float blockDepth)
 {
-	shared_ptr<GameComponent> component = make_shared<GameComponent>();
-	component->tag = name;
-	component->scale = scale;
-	Game::Instance()->Attach(component);
-	shared_ptr<Model> model = Content::LoadModel(name);
-	component->specular = glm::vec3(1.2f, 1.2f, 1.2f);
-	model->Initialise();
-	component->Attach(model);
+	
+	float gap = 0.5f;
 
-	std::vector<glm::vec3>::iterator it = model->vertices.begin(); 	
-	btConvexHullShape * tetraShape = new btConvexHullShape();
-
-	while (it != model->vertices.end())
-	{
-		glm::vec4 point = glm::vec4(* it, 0) * glm::scale(glm::mat4(1), scale);
-		tetraShape->addPoint(GLToBtVector(glm::vec3(point)));
-		it ++;
+	for(int d = 0; d < depth; d++)
+	{	
+		for (int w = 0 ; w < width ; w ++)
+		{
+			float x = startAt.x;
+			for (int h = 0 ; h < height ; h ++)	
+			{
+				float z = startAt.z + (blockWidth * w);
+				float y = ((blockHeight + gap) / 2.0f) + ((blockHeight + gap) * h);
+				CreateBox(blockWidth, blockHeight, blockDepth, mass*h, glm::vec3(x, y, z), glm::quat());
+			}
+		}
 	}
-	
-	btScalar mass = 1;
-	btVector3 inertia(0,0,0);
-	
-	tetraShape->calculateLocalInertia(mass,inertia);
-	btDefaultMotionState * motionState = new btDefaultMotionState(btTransform(GLToBtQuat(quat)
-		,GLToBtVector(pos)));	
-	
-	btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass,motionState, tetraShape, inertia);
-	btRigidBody * body = new btRigidBody(rigidBodyCI);
-	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
-	dynamicsWorld->addRigidBody(body);
-
-	shared_ptr<PhysicsController> controller =make_shared<PhysicsController>(tetraShape, body, motionState);	
-	body->setUserPointer(controller.get());
-	component->Attach(controller);
-	
-	controller->tag = "Model";	
-	return controller;
 }
+
+
 
 shared_ptr<PhysicsController> Create::CreateSphere(float radius, float m, glm::vec3 pos, glm::quat quat)
 {
@@ -106,19 +89,16 @@ shared_ptr<PhysicsController> Create::CreateSphere(float radius, float m, glm::v
 
 shared_ptr<PhysicsController> Create::CreateBox(float width, float height, float depth, float m, glm::vec3 pos, glm::quat quat)
 {
-	// Create the shape
 	btCollisionShape * boxShape = new btBoxShape(btVector3(width, height, depth) * 0.50);
 	btScalar mass = m;
 	btVector3 boxInertia(0,0,0);
 	boxShape->calculateLocalInertia(mass,boxInertia);
 
-	// This is a container for the box model
 	shared_ptr<Box> box = make_shared<Box>(width, height, depth);
 	box->worldMode = GameComponent::from_child;
 	box->position = pos;
 	Game::Instance()->Attach(box);
 
-	// Create the rigid body
 	btDefaultMotionState * boxMotionState = new btDefaultMotionState(btTransform(GLToBtQuat(quat)
 		,GLToBtVector(pos)));			
 	btRigidBody::btRigidBodyConstructionInfo fallRigidBodyCI(mass,  boxMotionState, boxShape, boxInertia);
@@ -126,7 +106,6 @@ shared_ptr<PhysicsController> Create::CreateBox(float width, float height, float
 	body->setFriction(567);
 	dynamicsWorld->addRigidBody(body);
 
-	// Create the physics component and add it to the box
 	shared_ptr<PhysicsController> boxController = make_shared<PhysicsController>(PhysicsController(boxShape, body, boxMotionState));
 	boxController->tag = "Box";
 	body->setUserPointer(boxController.get());
@@ -138,18 +117,15 @@ shared_ptr<PhysicsController> Create::CreateBox(float width, float height, float
 
 shared_ptr<PhysicsController> Create::CreateCylinder(float radius, float height, float m, glm::vec3 pos, glm::quat quat)
 {
-	// Create the shape
 	btCollisionShape * shape = new btCylinderShape(btVector3(radius, height * 0.5f, radius));
 	btScalar mass = m;
 	btVector3 inertia(0,0,0);
 	shape->calculateLocalInertia(mass,inertia);
 
-	// This is a container for the box model
 	shared_ptr<GameComponent> cyl = make_shared<GameComponent>(Cylinder(radius, height));
 	cyl->position = pos;
 	Game::Instance()->Attach(cyl);
 
-	// Create the rigid body
 	btDefaultMotionState * motionState = new btDefaultMotionState(btTransform(GLToBtQuat(quat)
 		,GLToBtVector(pos)));			
 	btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass,  motionState, shape, inertia);
@@ -157,7 +133,6 @@ shared_ptr<PhysicsController> Create::CreateCylinder(float radius, float height,
 	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
 	dynamicsWorld->addRigidBody(body);
 
-	// Create the physics component and add it to the box
 	shared_ptr<PhysicsController> component = make_shared<PhysicsController>(PhysicsController(shape, body, motionState));
 	body->setUserPointer(component.get());
 	component->tag = "Cylinder";
@@ -169,7 +144,6 @@ shared_ptr<PhysicsController> Create::CreateCylinder(float radius, float height,
 shared_ptr<PhysicsController> Create::CreateCameraPhysics()
 {
 	btVector3 inertia;
-	// Now add physics to the camera
 	btCollisionShape * cameraCyl = new btCylinderShape(btVector3(0.5f, 5.0f, 2.5f));
 	cameraCyl->calculateLocalInertia(1, inertia);
 	shared_ptr<GravGun> physicsCamera = make_shared<GravGun>(this);
@@ -231,7 +205,15 @@ void Create::CreateDoll(glm::vec3 pos)
 	leg1 = CreateBox(1,4,1,15, glm::vec3(pos.x, pos.y - 6.5, pos.z -0.7), glm::quat()); 
 	leg2 = CreateBox(1,4,1,15, glm::vec3(pos.x, pos.y - 6.5, pos.z + 0.7), glm::quat());
 
-	
+	head->tag = "Head";
+	body->tag = "Body";
+	arm1->tag = "Arm";
+	arm2->tag = "Arm";
+	forearm1->tag = "Forearm";
+	forearm2->tag = "Forearm";
+	leg1->tag = "Leg";
+	leg2->tag = "Leg";
+
 	btHingeConstraint * neck = new btHingeConstraint(* head->rigidBody, * body->rigidBody, btVector3(0,-1.5f,0),btVector3(0,4.5f,0), btVector3(0,1,0), btVector3(0,1,0), true);
 
 	btPoint2PointConstraint * shoulder = new btPoint2PointConstraint(*body->rigidBody, *arm1->rigidBody, btVector3(0,2.0f,2.0f),btVector3(0,-2.0f,-2.0f));
@@ -252,12 +234,6 @@ void Create::CreateDoll(glm::vec3 pos)
 void Create::CreateCar(glm::vec3 p, float cm, float wm)
 {
 
-	
-		btHingeConstraint * hinge1;
-		btHingeConstraint * hinge2;
-		btHingeConstraint * hinge3;
-		btHingeConstraint * hinge4;
-
 		glm::vec3 position = p;
 		float width = 12;
 		float height = 2;
@@ -269,23 +245,39 @@ void Create::CreateCar(glm::vec3 p, float cm, float wm)
 		float wheelOffset = 1.0f;
 
 		shared_ptr<PhysicsController> chassis = CreateBox(width, height, length, chassisMass, position, glm::quat());
+		chassis->tag = "Chassis";
 
-		frontright= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat());
-
-		hinge1 = new btHingeConstraint(* chassis->rigidBody, * frontright->rigidBody, btVector3(6.0f,0.0f,5.0f), btVector3(0,0,0), btVector3(0,0,1), btVector3(0,1,0), true);
+		frontright= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(94.5,0,45.5), glm::quat());
+		hinge1 = new btHingeConstraint(* chassis->rigidBody, * frontright->rigidBody, btVector3(-5.5f,0.0f,-4.5f), btVector3(0,0,0), btVector3(0,0,1), btVector3(0,1,0), true);
+		frontright->tag = "Wheel";
 		dynamicsWorld->addConstraint(hinge1);
 
-		backright= CreateCylinder(wheelRadius, wheelWidth,wheelMass, glm::vec3(106,10,5), glm::quat());
-		hinge2 = new btHingeConstraint(* chassis->rigidBody, * backright->rigidBody, btVector3(6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		backright= CreateCylinder(wheelRadius, wheelWidth,wheelMass, glm::vec3(105.5,0,45.5), glm::quat());
+		hinge2 = new btHingeConstraint(* chassis->rigidBody, * backright->rigidBody, btVector3(5.5f,0.0f,-4.5f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		backright->tag = "Wheel";
 		dynamicsWorld->addConstraint(hinge2);
 
-		backleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
-		hinge3 = new btHingeConstraint(* chassis->rigidBody, * backleft->rigidBody, btVector3(-6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		backleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(94.5,0,54.5), glm::quat()); 
+		hinge3 = new btHingeConstraint(* chassis->rigidBody, * backleft->rigidBody, btVector3(-5.5f,0.0f,4.5f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		backleft->tag = "Wheel";
 		dynamicsWorld->addConstraint(hinge3);
 
-		frontleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
-		hinge4 = new btHingeConstraint(* chassis->rigidBody, * frontleft->rigidBody, btVector3(-6.0f,0.0f,5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		frontleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(105.5,0,54.5), glm::quat()); 
+		hinge4 = new btHingeConstraint(* chassis->rigidBody, * frontleft->rigidBody, btVector3(5.5f,0.0f,4.5f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		frontleft->tag = "Wheel";
 		dynamicsWorld->addConstraint(hinge4);
+}
+
+void Create::CreateBalloon(glm::vec3 p, int amount)
+{
+	for(int i = 0; i <= amount; i ++)
+	{	
+		float randnumx = rand() % 10;
+		float randnumz = rand() % 10;
+		shared_ptr<PhysicsController> balloon = CreateSphere(1.5,1,glm::vec3(p.x +(i*randnumx),p.y,p.z + (i*randnumz)),glm::quat());
+		balloon->rigidBody->setGravity(btVector3(0,2,0));
+		balloon->tag = "balloon";
+	}
 }
 
 void Create::MoveCarForward(float speed)
@@ -295,4 +287,7 @@ void Create::MoveCarForward(float speed)
 		backleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
 		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
 }
+
+
+
 
