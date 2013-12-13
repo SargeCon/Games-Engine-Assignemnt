@@ -21,18 +21,18 @@ Create::~Create(void)
 {
 }
 
-void Create::CreateWall(glm::vec3 startAt, float width, float height, float blockWidth, float blockHeight, float blockDepth)
+void Create::CreateWall(glm::vec3 startAt, float width, float height, float mass, float blockWidth, float blockHeight, float blockDepth)
 {
-	float z = startAt.z;
-	float gap = 1;
+	float x = startAt.x;
+	float gap = 0.5f;
 
 	for (int w = 0 ; w < width ; w ++)
 	{
 		for (int h = 0 ; h < height ; h ++)	
 		{
-			float x = startAt.x + ((blockWidth + 2) * w);
+			float z = startAt.z + (blockWidth * w);
 			float y = ((blockHeight + gap) / 2.0f) + ((blockHeight + gap) * h);
-			CreateBox(blockWidth, blockHeight, blockDepth, 10, glm::vec3(x, y, z), glm::quat());
+			CreateBox(blockWidth, blockHeight, blockDepth, mass, glm::vec3(x, y, z), glm::quat());
 		}
 	}
 }
@@ -210,7 +210,7 @@ shared_ptr<PhysicsController> Create::CreateGroundPhysics()
 
 
 
-void Create::CreateDoll()
+void Create::CreateDoll(glm::vec3 pos)
 {
 
 	std::shared_ptr<PhysicsController> body;
@@ -222,14 +222,14 @@ void Create::CreateDoll()
 	std::shared_ptr<PhysicsController> leg1;
 	std::shared_ptr<PhysicsController> leg2;
  
-	head = CreateSphere(2,30,glm::vec3(20, 26, 0), glm::quat());
-	body = CreateBox(2,6,3,20, glm::vec3(20, 20, 0), glm::quat()); 
-	arm1 = CreateBox(1,1,3,10, glm::vec3(20, 22, 5), glm::quat()); 
-	forearm1 = CreateBox(1,1,4,10, glm::vec3(20, 22, 8), glm::quat()); 
-	arm2 = CreateBox(1,1,3,10, glm::vec3(20, 22, -5), glm::quat()); 
-	forearm2 = CreateBox(1,1,4,10, glm::vec3(20, 22, -8), glm::quat());
-	leg1 = CreateBox(1,4,1,15, glm::vec3(20, 13.5, -0.7), glm::quat()); 
-	leg2 = CreateBox(1,4,1,15, glm::vec3(20, 13.5, 0.7), glm::quat());
+	head = CreateSphere(2,30,glm::vec3(pos.x, pos.y + 6, pos.z), glm::quat());
+	body = CreateBox(2,6,3,20, pos, glm::quat()); 
+	arm1 = CreateBox(1,1,3,10, glm::vec3(pos.x, pos.y + 2, pos.z + 5), glm::quat()); 
+	forearm1 = CreateBox(1,1,4,10, glm::vec3(pos.x, pos.y + 2, pos.z + 8), glm::quat()); 
+	arm2 = CreateBox(1,1,3,10, glm::vec3(pos.x, pos.y + 2, pos.z - 5), glm::quat()); 
+	forearm2 = CreateBox(1,1,4,10, glm::vec3(pos.x, pos.y + 2, pos.z - 8), glm::quat());
+	leg1 = CreateBox(1,4,1,15, glm::vec3(pos.x, pos.y - 6.5, pos.z -0.7), glm::quat()); 
+	leg2 = CreateBox(1,4,1,15, glm::vec3(pos.x, pos.y - 6.5, pos.z + 0.7), glm::quat());
 
 	
 	btHingeConstraint * neck = new btHingeConstraint(* head->rigidBody, * body->rigidBody, btVector3(0,-1.5f,0),btVector3(0,4.5f,0), btVector3(0,1,0), btVector3(0,1,0), true);
@@ -240,6 +240,7 @@ void Create::CreateDoll()
 	btPoint2PointConstraint * elbow2 = new btPoint2PointConstraint(*arm2->rigidBody, *forearm2->rigidBody, btVector3(0,0,2.0f),btVector3(0,0,-2.0f));
 	btPoint2PointConstraint * hip1 = new btPoint2PointConstraint(*body->rigidBody, *leg1->rigidBody, btVector3(0,-3.0f,-1.0f),btVector3(0,3.0f,0));
 	btPoint2PointConstraint * hip2 = new btPoint2PointConstraint(*body->rigidBody, *leg2->rigidBody, btVector3(0,-3.0f,1.0f),btVector3(0,3.0f,0));
+
 	dynamicsWorld->addConstraint(neck);
 	dynamicsWorld->addConstraint(hip1);
 	dynamicsWorld->addConstraint(hip2);
@@ -248,3 +249,50 @@ void Create::CreateDoll()
 	dynamicsWorld->addConstraint(shoulder2);
 	dynamicsWorld->addConstraint(elbow2);
 }
+void Create::CreateCar(glm::vec3 p, float cm, float wm)
+{
+
+	
+		btHingeConstraint * hinge1;
+		btHingeConstraint * hinge2;
+		btHingeConstraint * hinge3;
+		btHingeConstraint * hinge4;
+
+		glm::vec3 position = p;
+		float width = 12;
+		float height = 2;
+		float length = 5;
+		float chassisMass = cm;
+		float wheelWidth = 1;
+		float wheelRadius = 1.5f;
+		float wheelMass = wm;
+		float wheelOffset = 1.0f;
+
+		shared_ptr<PhysicsController> chassis = CreateBox(width, height, length, chassisMass, position, glm::quat());
+
+		frontright= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat());
+
+		hinge1 = new btHingeConstraint(* chassis->rigidBody, * frontright->rigidBody, btVector3(6.0f,0.0f,5.0f), btVector3(0,0,0), btVector3(0,0,1), btVector3(0,1,0), true);
+		dynamicsWorld->addConstraint(hinge1);
+
+		backright= CreateCylinder(wheelRadius, wheelWidth,wheelMass, glm::vec3(106,10,5), glm::quat());
+		hinge2 = new btHingeConstraint(* chassis->rigidBody, * backright->rigidBody, btVector3(6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		dynamicsWorld->addConstraint(hinge2);
+
+		backleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
+		hinge3 = new btHingeConstraint(* chassis->rigidBody, * backleft->rigidBody, btVector3(-6.0f,0.0f,-5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		dynamicsWorld->addConstraint(hinge3);
+
+		frontleft= CreateCylinder(wheelRadius, wheelWidth, wheelMass, glm::vec3(106,10,5), glm::quat()); 
+		hinge4 = new btHingeConstraint(* chassis->rigidBody, * frontleft->rigidBody, btVector3(-6.0f,0.0f,5.0f),btVector3(0,0, 0), btVector3(0,0,1), btVector3(0,1,0), true);
+		dynamicsWorld->addConstraint(hinge4);
+}
+
+void Create::MoveCarForward(float speed)
+{
+		frontright->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
+		backright->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
+		backleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
+		frontleft->rigidBody->applyTorque(GLToBtVector(glm::vec3(0.0f,0.0f,speed)));
+}
+
