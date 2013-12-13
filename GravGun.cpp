@@ -40,6 +40,42 @@ void GravGun::Update(float timeDelta)
 	float timeToPass = 1.0f / fireRate;
 	string what = "Nothing";
 
+	if ((keyState[SDL_SCANCODE_C]) && (elapsed > timeToPass))
+	{
+		glm::vec3 pos = parent->position + (parent->look * 5.0f);
+		glm::quat q(RandomFloat(), RandomFloat(), RandomFloat(), RandomFloat());
+		glm::normalize(q);
+		make->CreateBalloon(pos, 10);
+
+		elapsed = 0.0f;
+	}
+
+	//Spawn in balls and fire them
+	if ((keyState[SDL_SCANCODE_Q]) && (elapsed > timeToPass))
+	{
+		glm::vec3 pos = parent->position + (parent->look * 5.0f);
+		glm::quat q(RandomFloat(), RandomFloat(), RandomFloat(), RandomFloat());
+		glm::normalize(q);
+		shared_ptr<PhysicsController> ball = make->CreateSphere(2,1,pos,q);
+
+		float force = 10000.0f;
+		ball->rigidBody->applyCentralForce(GLToBtVector(parent->look) * force);
+		elapsed = 0.0f;
+	}
+
+	//Spawn in ragdoll
+	if ((keyState[SDL_SCANCODE_E]) && (elapsed > timeToPass))
+	{
+		glm::vec3 pos = parent->position + (parent->look * 20.0f);
+		make->CreateDoll(pos);
+		elapsed = 0.0f;
+	}
+	else
+	{
+		elapsed += timeDelta;
+	}
+
+	//When a mouse button is pressed it pushes objects away
 	if (SDL_GetMouseState(NULL, NULL) && SDL_BUTTON(SDL_BUTTON_LEFT))
 	{
 		float dist = 1000.0f;
@@ -50,7 +86,7 @@ void GravGun::Update(float timeDelta)
 
 			btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom, rayTo);
 			make->dynamicsWorld->rayTest(rayFrom, rayTo, rayCallback);
-			
+			//Using rayscasting to check for objects
 			if (rayCallback.hasHit())
 			{
 				LookForObject = reinterpret_cast<PhysicsController*>(rayCallback.m_collisionObject->getUserPointer());
@@ -60,6 +96,7 @@ void GravGun::Update(float timeDelta)
 				}
 			}
 		}
+		//if there is an object detected
 		if (LookForObject != NULL)
 		{
 			float powerfactor = 4.0f;
@@ -72,6 +109,7 @@ void GravGun::Update(float timeDelta)
 			what = LookForObject->tag;	
 		}
 	}
+	//Same as above, except it grabs objects
 	if (keyState[SDL_SCANCODE_SPACE])
 	{
 		float dist = 1000.0f;
@@ -94,22 +132,21 @@ void GravGun::Update(float timeDelta)
 		}
 		if (LookForObject != NULL)
 		{
-			float powerfactor = 4.0f; // Higher values causes the targets moving faster to the holding point.
-            float maxVel = 3.0f;      // Lower values prevent objects flying through walls.
+			float powerfactor = 4.0f; 
+            float maxVel = 3.0f;     
 			float holdDist = 30.0f;
 			
 
-            //Calculate the hold point in front of the camera
 			glm::vec3 holdPos = parent->position + (parent->look * holdDist);
 
-			glm::vec3 v = holdPos - LookForObject->position; // direction to move the Target
-            v *= powerfactor; // powerfactor of the GravityGun
+			glm::vec3 v = holdPos - LookForObject->position; 
+            v *= powerfactor; 
 
             if (v.length() > maxVel)
             {
-                //if the correction-velocity is bigger than maximum
+                
 				 v = glm::normalize(v);
-                 v *= maxVel; // just set correction-velocity to the maximum
+                 v *= maxVel; 
             }
 			LookForObject->rigidBody->setLinearVelocity(GLToBtVector(v));
 			LookForObject->rigidBody->activate();		

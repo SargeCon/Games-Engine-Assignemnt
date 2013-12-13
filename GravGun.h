@@ -12,6 +12,8 @@ namespace BGE
 	{
 	private:
 		PhysicsController * LookForObject;
+		float elapsed;
+		float fireRate;
 	public:
 		GravGun(Create * dWorld);
 		~GravGun(void);
@@ -22,7 +24,6 @@ namespace BGE
 		void getWorldTransform(btTransform &worldTrans) const;
 		void setWorldTransform(const btTransform &worldTrans);
 		Create * make;
-		float elapsed;
-		float fireRate;
+
 	};
 }
