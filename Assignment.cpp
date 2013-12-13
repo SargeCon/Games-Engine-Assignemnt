@@ -56,8 +56,10 @@ bool Assignment::Initialise()
 	make->CreateWall(glm::vec3(10,10,10), 1,5, 1);
 	make->CreateWall(glm::vec3(40,10,10), 1,5, 10);
 	make->CreateWall(glm::vec3(70,10,10), 1,5, 25);
-	make->CreateWall(glm::vec3(70,10,200), 10,4, 25);
-	make->CreateBuilding(glm::vec3(100,10,100), 3,3,5,10);
+	make->CreateWall(glm::vec3(70,10,200), 15,10, 25);
+	make->CreateWall(glm::vec3(170,10,200), 15,10, 5);
+	make->CreateBuilding(glm::vec3(100,10,100), 5,5,15,10);
+	make->CreateBuilding(glm::vec3(200,10,100), 5,5,15,10);
 	make->CreateWall(glm::vec3(-20,3.8,63), 5,5,2);
 	make->CreateWall(glm::vec3(-60,3.8,73), 5,5,10);
 	make->CreateWall(glm::vec3(-90,3.8,83), 5,5,100);

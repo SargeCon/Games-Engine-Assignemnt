@@ -53,7 +53,7 @@ void Create::CreateBuilding(glm::vec3 startAt,float depth, float width, float he
 			{
 				float z = startAt.z + (blockWidth * w);
 				float y = ((blockHeight + gap) / 2.0f) + ((blockHeight + gap) * h);
-				CreateBox(blockWidth, blockHeight, blockDepth, mass*h, glm::vec3(x, y, z), glm::quat());
+				CreateBox(blockWidth, blockHeight, blockDepth, mass, glm::vec3(x, y, z), glm::quat());
 			}
 		}
 	}
