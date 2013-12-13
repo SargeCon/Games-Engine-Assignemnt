@@ -11,9 +11,9 @@ namespace BGE
 		public PhysicsController, public btMotionState 
 	{
 	private:
-		PhysicsController * pickedUp;
+		PhysicsController * LookForObject;
 	public:
-		GravGun(Create * physicsFactory);
+		GravGun(Create * dWorld);
 		~GravGun(void);
 
 		//bool Initialise();
@@ -21,7 +21,7 @@ namespace BGE
 
 		void getWorldTransform(btTransform &worldTrans) const;
 		void setWorldTransform(const btTransform &worldTrans);
-		Create * physicsFactory;
+		Create * make;
 		float elapsed;
 		float fireRate;
 	};

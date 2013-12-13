@@ -6,13 +6,13 @@
 #include "Utils.h"
 using namespace BGE;
 
-GravGun::GravGun(Create * physicsFactory):PhysicsController()
+GravGun::GravGun(Create * dWorld):PhysicsController()
 {
 	elapsed = 10000.0f;
 	fireRate = 5.0f;
-	pickedUp = NULL;
+	LookForObject = NULL;
 	tag = "Physics Camera";
-	this->physicsFactory = physicsFactory;
+	this->make = dWorld;
 }
 
 
@@ -40,65 +40,87 @@ void GravGun::Update(float timeDelta)
 	float timeToPass = 1.0f / fireRate;
 	string what = "Nothing";
 
-	if ((keyState[SDL_SCANCODE_SPACE]) && (elapsed > timeToPass))
-	{
-		glm::vec3 pos = parent->position + (parent->look * 5.0f);
-		glm::quat q(RandomFloat(), RandomFloat(), RandomFloat(), RandomFloat());
-		glm::normalize(q);
-		shared_ptr<PhysicsController> physicsComponent = physicsFactory->CreateBox(1,1,1,10,pos, q);
-		
-		float force = 5000.0f;
-		physicsComponent->rigidBody->applyCentralForce(GLToBtVector(parent->look) * force);
-		elapsed = 0.0f;
-	}
-	// Handle the gravity gun
-	if (SDL_GetMouseState(NULL, NULL) && SDL_BUTTON(3))
+	if (SDL_GetMouseState(NULL, NULL) && SDL_BUTTON(SDL_BUTTON_LEFT))
 	{
 		float dist = 1000.0f;
-		if (pickedUp == NULL)
+		if (LookForObject == NULL)
 		{		
-			btVector3 rayFrom = GLToBtVector(parent->position + (parent->look * 4.0f)); // Has to be some distance in front of the camera otherwise it will collide with the camera all the time
+			btVector3 rayFrom = GLToBtVector(parent->position + (parent->look * 4.0f)); 
 			btVector3 rayTo = GLToBtVector(parent->position + (parent->look * dist));
 
 			btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom, rayTo);
-			physicsFactory->dynamicsWorld->rayTest(rayFrom, rayTo, rayCallback);
+			make->dynamicsWorld->rayTest(rayFrom, rayTo, rayCallback);
 			
 			if (rayCallback.hasHit())
 			{
-				pickedUp = reinterpret_cast<PhysicsController*>(rayCallback.m_collisionObject->getUserPointer());
-				if (pickedUp->parent == game->GetGround().get())
+				LookForObject = reinterpret_cast<PhysicsController*>(rayCallback.m_collisionObject->getUserPointer());
+				if (LookForObject->parent == game->GetGround().get())
 				{
-					pickedUp = NULL;
+					LookForObject = NULL;
 				}
 			}
 		}
-		if (pickedUp != NULL)
+		if (LookForObject != NULL)
+		{
+			float powerfactor = 4.0f;
+            float maxVel = 3.0f;      
+			float holdDist = 30.0f;
+			float force = 5000.0f;
+
+			LookForObject->rigidBody->applyCentralForce(GLToBtVector(parent->look) * force);
+			LookForObject->rigidBody->activate();		
+			what = LookForObject->tag;	
+		}
+	}
+	if (keyState[SDL_SCANCODE_SPACE])
+	{
+		float dist = 1000.0f;
+		if (LookForObject == NULL)
+		{		
+			btVector3 rayFrom = GLToBtVector(parent->position + (parent->look * 4.0f)); 
+			btVector3 rayTo = GLToBtVector(parent->position + (parent->look * dist));
+
+			btCollisionWorld::ClosestRayResultCallback rayCallback(rayFrom, rayTo);
+			make->dynamicsWorld->rayTest(rayFrom, rayTo, rayCallback);
+			
+			if (rayCallback.hasHit())
+			{
+				LookForObject = reinterpret_cast<PhysicsController*>(rayCallback.m_collisionObject->getUserPointer());
+				if (LookForObject->parent == game->GetGround().get())
+				{
+					LookForObject = NULL;
+				}
+			}
+		}
+		if (LookForObject != NULL)
 		{
 			float powerfactor = 4.0f; // Higher values causes the targets moving faster to the holding point.
             float maxVel = 3.0f;      // Lower values prevent objects flying through walls.
 			float holdDist = 30.0f;
+			
 
-            // Calculate the hold point in front of the camera
+            //Calculate the hold point in front of the camera
 			glm::vec3 holdPos = parent->position + (parent->look * holdDist);
 
-            glm::vec3 v = holdPos - pickedUp->position; // direction to move the Target
+			glm::vec3 v = holdPos - LookForObject->position; // direction to move the Target
             v *= powerfactor; // powerfactor of the GravityGun
 
             if (v.length() > maxVel)
             {
-                // if the correction-velocity is bigger than maximum
-				v = glm::normalize(v);
-                v *= maxVel; // just set correction-velocity to the maximum
+                //if the correction-velocity is bigger than maximum
+				 v = glm::normalize(v);
+                 v *= maxVel; // just set correction-velocity to the maximum
             }
-			pickedUp->rigidBody->setLinearVelocity(GLToBtVector(v));    
-			pickedUp->rigidBody->activate();		
-			what = pickedUp->tag;	
+			LookForObject->rigidBody->setLinearVelocity(GLToBtVector(v));
+			LookForObject->rigidBody->activate();		
+			what = LookForObject->tag;	
 		}
 	}
 	else
 	{    
-		pickedUp = NULL;
+		LookForObject = NULL;
 	}
+
 	stringstream ss;
 	ss << "Picked up: " << what;
 	game->PrintText(ss.str());
